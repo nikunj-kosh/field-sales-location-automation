@@ -26,4 +26,4 @@ jobs:
           SUPERSET_UN:        ${{ secrets.SUPERSET_UN }}
           SUPERSET_PASS:      ${{ secrets.SUPERSET_PASS }}
           CHANNEL_AUTH_TOKEN: ${{ secrets.CHANNEL_AUTH_TOKEN }}
-        run: python location_report.py
+        run: python location_report.py ${{ github.event_name == 'workflow_dispatch' && '--force' || '' }}

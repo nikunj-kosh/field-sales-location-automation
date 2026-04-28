@@ -1,5 +1,6 @@
 import requests
 import os
+import sys
 import time
 import urllib3
 import pandas as pd
@@ -17,13 +18,13 @@ AUTH_TOKEN        = f'Bearer {os.environ["CHANNEL_AUTH_TOKEN"]}'
 IST = timezone(timedelta(hours=5, minutes=30))
 
 # manager_name (as it appears in DB) → bchat channel_id
+# Only channels ending in ~ work with create-system-msg API (proper group channels)
+# Channels for ASHOK RANA, RAHUL KUMAR, Sanam Kumar, SHAILENDRA SINGH RATHORE need
+# proper group channel IDs — ask managers or Kosh tech team to share their channel link
 MANAGER_CHANNELS = {
-    'ASHOK RANA':               'JKcpTUdkp-UzqrSULse7BM_F4-BUPuukFWGsz-mahmkX1Dedzw1_186AeVXgSce9',
-    'Himanshu':                 'aHQzwmGYmPtJ1crVLF3p2A~~',
-    'RAHUL KUMAR':              'YtouXAvzbRwfiHzsQOF6wj07oRcLpxivk5xxsCy1CblMuq-BwG1ao8ZqFq_L5pOw',
-    'Sanam Kumar':              'WDwFq6EF8-aK1QM1xm4jYg5Jmlpsm05WAh9EeLKjZPEUnCmaIKUQmsDAYTj87t-w',
-    'SHAILENDRA SINGH RATHORE': 'dKs3mhc57CaRxVxPm2rjZWCd77YT-EiGmc15hJS-0byOy8-7b5JNQ5460ps_M1Rr',
-    'Shivam Raina':             '0dyueHfF0uq9LjwVhdswr5x7EyqSfB3OQc5mBdbi-X4~',
+    'Himanshu':    'aHQzwmGYmPtJ1crVLF3p2A~~',
+    'Shivam Tyagi': '2CeEQFNKRqO6FsBvbOAFxemF6Q2DnlCFOtq_RpzNNCM~',
+    'Shivam Raina': '0dyueHfF0uq9LjwVhdswr5x7EyqSfB3OQc5mBdbi-X4~',
 }
 
 # ── Superset auth ─────────────────────────────────────────────────────────────
@@ -72,8 +73,9 @@ def send_message(channel_id, text):
 def main():
     now_ist = datetime.now(IST)
 
-    if not (9 <= now_ist.hour < 18):
-        print(f"Outside window ({now_ist.strftime('%H:%M')} IST) — skipping")
+    force = '--force' in sys.argv
+    if not force and not (9 <= now_ist.hour < 18):
+        print(f"Outside window ({now_ist.strftime('%H:%M')} IST) — skipping. Use --force to override.")
         return
 
     today_str   = now_ist.strftime('%Y-%m-%d')
