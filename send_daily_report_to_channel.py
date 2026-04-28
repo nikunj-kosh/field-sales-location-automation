@@ -10,8 +10,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- CONFIGURATION ---
 SUPERSET_URL      = 'https://superset.bkosh.com'
-SUPERSET_USERNAME = os.environ["CHANNEL_SUPERSET_UN"]
-SUPERSET_PASSWORD = os.environ["CHANNEL_SUPERSET_PASS"]
+SUPERSET_USERNAME = os.environ["SUPERSET_UN"]
+SUPERSET_PASSWORD = os.environ["SUPERSET_PASS"]
 DATABASE_ID       = 21
 API_URL           = 'https://kosh.cluster.gksh.in/chat/v1/channel-message/create-system-msg/'
 AUTH_TOKEN        = f'Bearer {os.environ["CHANNEL_AUTH_TOKEN"]}'

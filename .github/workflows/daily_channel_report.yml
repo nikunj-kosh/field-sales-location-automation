@@ -23,7 +23,7 @@ jobs:
 
       - name: Run and send report
         env:
-          CHANNEL_SUPERSET_UN:   ${{ secrets.CHANNEL_SUPERSET_UN }}
-          CHANNEL_SUPERSET_PASS: ${{ secrets.CHANNEL_SUPERSET_PASS }}
-          CHANNEL_AUTH_TOKEN:    ${{ secrets.CHANNEL_AUTH_TOKEN }}
+          SUPERSET_UN:        ${{ secrets.SUPERSET_UN }}
+          SUPERSET_PASS:      ${{ secrets.SUPERSET_PASS }}
+          CHANNEL_AUTH_TOKEN: ${{ secrets.CHANNEL_AUTH_TOKEN }}
         run: python send_daily_report_to_channel.py
