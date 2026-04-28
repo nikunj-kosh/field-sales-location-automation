@@ -104,9 +104,7 @@ def get_base_query(target_date):
         LEFT JOIN referral_sales d ON d._customer_engagement_lead_id = a._customer_engagement_lead_id
         LEFT JOIN "dss_KOSHSUPERSET_crif_details_acc_agg_st" e ON a.cx_user_id = e.tenant_user_id
     ),
-    core_ AS (
-        SELECT * FROM "dss_KOSHSUPERSET_acc_agg_finark_details_st" WHERE source IN ('account_aggregator')
-    ),
+    
     main_ AS (
         SELECT DISTINCT
             a.loan_id,
@@ -122,7 +120,7 @@ def get_base_query(target_date):
             DATE_TRUNC('month', TO_DATE(a.approval_date, 'YYYY-MM-DD'))::date AS approval_month,
             a.team
         FROM "dss_KOSHSUPERSET_acc_agg_fs_rs_st" a
-        LEFT JOIN core_ b
+        LEFT JOIN core b
             ON a.tenant_user_id = b.user_id
             AND (a.ifsc_code = b.ifsc_code OR RIGHT(b.acc_number, 4) = RIGHT(a.bank_account, 4))
     ),
@@ -197,11 +195,11 @@ def main():
         print(f"No data found for {target_str}")
         return
 
-    filename   = f"acc_agg_or_not_ntc_{target_str}.csv"
+    filename   = f"acc_no_agg_or_ntc_{target_str}.csv"
     file_paths = []
 
     try:
-        df_report = df_all[(df_all['source'] == 'account_aggregator') | (df_all['crif_score'] > 299)]
+        df_report = df_all[(df_all['source'] != 'account_aggregator') | (df_all['crif_score'] <= 299)]
         with open(filename, "w", newline="", encoding='utf-8') as f:
             df_report.to_csv(f, index=False)
         file_paths.append(filename)
