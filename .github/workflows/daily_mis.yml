@@ -1,0 +1,89 @@
+name: Daily AUM MIS Report
+
+on:
+  schedule:
+    - cron: '30 3 * * *'   # 9:00 AM IST (UTC+5:30)
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+jobs:
+  generate-and-send:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate MIS report
+        env:
+          SUPERSET_UN:   ${{ secrets.SUPERSET_UN }}
+          SUPERSET_PASS: ${{ secrets.SUPERSET_PASS }}
+        run: python aum_disbursement_export.py
+
+      - name: Send report by email
+        env:
+          GMAIL_USER:         ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          python - <<'EOF'
+          import smtplib, glob, os
+          from datetime import datetime
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.base import MIMEBase
+          from email.mime.text import MIMEText
+          from email import encoders
+
+          files = glob.glob("AUM_MIS_TimeSeries_*.xlsx")
+          if not files:
+              raise FileNotFoundError("Report file not found — check previous step logs")
+          report = files[0]
+
+          recipients = ["ayushd@nfcpl.in"]
+          today      = datetime.today().strftime("%d %b %Y")
+
+          msg            = MIMEMultipart()
+          msg["From"]    = os.environ["GMAIL_USER"]
+          msg["To"]      = ", ".join(recipients)
+          msg["Subject"] = f"AUM MIS Time Series Report — {today}"
+
+          body = f"""Hi,
+
+          Please find attached the daily AUM & Disbursement MIS Time Series report for {today}.
+
+          The report covers 8 portfolio cuts:
+            1. By Cluster
+            2. By Ticket Size
+            3. By Sourcing Mix
+            4. By Income Level
+            5. By Employment Type
+            6. By Lender Count
+            7. By Book Type
+            8. New vs Repeat
+
+          Each sheet includes a full monthly time series from Jan 2022 to the latest snapshot, along with line charts for AUM and Disbursals.
+
+          Regards,
+          Kosh Automated Reports
+          """
+          msg.attach(MIMEText(body.strip(), "plain"))
+
+          with open(report, "rb") as f:
+              part = MIMEBase("application", "octet-stream")
+              part.set_payload(f.read())
+              encoders.encode_base64(part)
+              part.add_header("Content-Disposition", f'attachment; filename="{report}"')
+              msg.attach(part)
+
+          with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+              smtp.login(os.environ["GMAIL_USER"], os.environ["GMAIL_APP_PASSWORD"])
+              smtp.sendmail(os.environ["GMAIL_USER"], recipients, msg.as_string())
+
+          print(f"[OK] Email sent to {recipients} with attachment: {report}")
+          EOF
