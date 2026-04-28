@@ -14,7 +14,7 @@ SUPERSET_PASSWORD = os.environ["SUPERSET_PASS"]
 DATABASE_ID       = 21
 API_URL           = 'https://kosh.cluster.gksh.in/chat/v1/channel-message/create-system-msg/'
 AUTH_TOKEN        = f'Bearer {os.environ["CHANNEL_AUTH_TOKEN"]}'
-CHANNEL_ID        = 'HUw1tY5eGk0QCHB9ZuNrPpI5ILVg3EyiAY7ROx63eaw~'  # acc_agg channel (test)
+CHANNEL_ID        = 't7NHtmu7EPIUZqZ8jabuP1JbooV6jXFpJ4nZ7x6ykDE~'
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
