@@ -45,7 +45,7 @@ jobs:
               raise FileNotFoundError("Report file not found — check previous step logs")
           report = files[0]
 
-          recipients = ["ayushd@nfcpl.in"]
+          recipients = ["ayushd@nfcpl.in", "sahil@getkosh.com"]
           today      = datetime.today().strftime("%d %b %Y")
 
           msg            = MIMEMultipart()

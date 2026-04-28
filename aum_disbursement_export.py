@@ -429,9 +429,9 @@ for name, df in datasets.items():
         disb_start = aum_last + 3
         disb_last, disb_hdr, disb_fdr, _ = write_pivot_block(
             ws, disb_piv, start_row=disb_start,
-            label="Total Disbursal — Adjusted (INR)")
+            label="Total Disbursal (INR)")
         ws.add_chart(
-            make_line_chart(ws, disb_fdr, disb_last, disb_hdr, nc, "Total Disbursal — Adjusted"),
+            make_line_chart(ws, disb_fdr, disb_last, disb_hdr, nc, "Total Disbursal"),
             f"{chart_col}{disb_start}")
 
         ws.freeze_panes = "B3"
