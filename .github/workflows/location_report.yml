@@ -1,0 +1,29 @@
+name: Field Sales Live Location Report
+
+on:
+  schedule:
+    - cron: '*/10 3-12 * * *'   # every 10 min, 3 AM–12 PM UTC (≈ 8:30 AM–6 PM IST)
+  workflow_dispatch:             # allow manual trigger from GitHub UI
+
+jobs:
+  send-location-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send location report
+        env:
+          SUPERSET_UN:        ${{ secrets.SUPERSET_UN }}
+          SUPERSET_PASS:      ${{ secrets.SUPERSET_PASS }}
+          CHANNEL_AUTH_TOKEN: ${{ secrets.CHANNEL_AUTH_TOKEN }}
+        run: python location_report.py
