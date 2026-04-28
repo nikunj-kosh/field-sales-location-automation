@@ -81,10 +81,22 @@ def main():
     print(f"Generating location report for {today_str} at {report_time}")
 
     sql = f"""
-    SELECT manager_name, name, username, location_on
-    FROM "dss_KOSHSUPERSET_live_fso_live_locations_copy"
-    WHERE date IS NULL
-      AND report_date = '{today_str}'
+    SELECT
+        a.manager_name,
+        a.name,
+        a.username,
+        CASE
+            WHEN (current_timestamp AT TIME ZONE 'Asia/Kolkata')
+                 - (c.max_time_in_IST::timestamp) < INTERVAL '30 minutes'
+            THEN 'Yes'
+            ELSE 'No'
+        END AS location_on
+    FROM "dss_KOSHSUPERSET_fso_details_static_copy" a
+    LEFT JOIN "dss_KOSHSUPERSET_fso_distance_details_final_static_copy" b
+        ON a.tenant_user_id = b.user_id AND a.report_date = b.date
+    LEFT JOIN "dss_KOSHSUPERSET_fso_location_time_t2_static_copy" c
+        ON a.tenant_user_id = c.user_id AND b.date = c.date
+    WHERE a.report_date::date = '{today_str}'
     """
     df = run_query(sql)
 
