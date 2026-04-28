@@ -14,18 +14,11 @@ SUPERSET_PASSWORD = os.environ["SUPERSET_PASS"]
 DATABASE_ID       = 21
 API_URL           = 'https://kosh.cluster.gksh.in/chat/v1/channel-message/create-system-msg/'
 AUTH_TOKEN        = f'Bearer {os.environ["CHANNEL_AUTH_TOKEN"]}'
+CHANNEL_ID        = 'Iv07Ze2JAryCz4nHNBnjbAeC2nH1ZPj9Fh6lbOTHWkI1SmwkuJNgcladeNbTeMNF'
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
-# manager_name (as it appears in DB) → bchat channel_id
-# Only channels ending in ~ work with create-system-msg API (proper group channels)
-# Channels for ASHOK RANA, RAHUL KUMAR, Sanam Kumar, SHAILENDRA SINGH RATHORE need
-# proper group channel IDs — ask managers or Kosh tech team to share their channel link
-MANAGER_CHANNELS = {
-    'Himanshu':    'aHQzwmGYmPtJ1crVLF3p2A~~',
-    'Shivam Tyagi': '2CeEQFNKRqO6FsBvbOAFxemF6Q2DnlCFOtq_RpzNNCM~',
-    'Shivam Raina': '0dyueHfF0uq9LjwVhdswr5x7EyqSfB3OQc5mBdbi-X4~',
-}
+SKIP_MANAGERS = {'KARUN KAKAR', 'Partik Pannu'}
 
 # ── Superset auth ─────────────────────────────────────────────────────────────
 _session = requests.Session()
@@ -62,10 +55,11 @@ def run_query(sql):
         raise RuntimeError(f"Query error: {d.get('error') or d.get('errors')}")
     return pd.DataFrame(d.get("data", []))
 
-def send_message(channel_id, text):
+def send_message(text):
     headers = {'Authorization': AUTH_TOKEN}
-    payload = [('channel', (None, channel_id)), ('text', (None, text))]
+    payload = [('channel', (None, CHANNEL_ID)), ('text', (None, text))]
     resp = requests.post(API_URL, headers=headers, files=payload, timeout=30)
+    print(f"  API response: {resp.status_code} — {resp.text[:200]}")
     resp.raise_for_status()
     return resp
 
@@ -106,10 +100,9 @@ def main():
         print(f"No live location data found for {today_str}")
         return
 
-    for manager_name, channel_id in MANAGER_CHANNELS.items():
-        team = df[df['manager_name'] == manager_name]
-        if team.empty:
-            print(f"No data for {manager_name} — skipping")
+    sections = []
+    for manager_name, team in df.groupby('manager_name'):
+        if manager_name in SKIP_MANAGERS:
             continue
 
         total     = len(team)
@@ -118,23 +111,28 @@ def main():
 
         off_rows = team[team['location_on'] != 'Yes'][['name', 'username']]
         off_list = "\n".join(
-            f"  {r['name']} — {r['username']}" for _, r in off_rows.iterrows()
+            f"  {row['name']} — {row['username']}" for _, row in off_rows.iterrows()
         )
 
-        msg = (
-            f"Field Sales Live Location Report — {report_time}\n\n"
-            f"Total Members: {total}\n"
-            f"Location ON:   {on_count}\n"
-            f"Location OFF:  {off_count}\n\n"
-            f"Members with Location OFF:\n"
-            f"{off_list if off_list else 'None'}"
+        sections.append(
+            f"{manager_name}\n"
+            f"Total: {total}  |  ON: {on_count}  |  OFF: {off_count}\n"
+            f"Location OFF:\n{off_list if off_list else '  None'}"
         )
+        print(f"  {manager_name}: total={total}, ON={on_count}, OFF={off_count}")
 
-        try:
-            send_message(channel_id, msg)
-            print(f"[OK] {manager_name}: ON={on_count}, OFF={off_count}")
-        except Exception as e:
-            print(f"[ERR] {manager_name}: {e}")
+    if not sections:
+        print("No data for any manager after filtering")
+        return
+
+    msg = f"Field Sales Live Location Report — {report_time}\n\n" + "\n\n".join(sections)
+
+    print(f"Sending combined report to channel...")
+    try:
+        send_message(msg)
+        print("[OK] Report sent successfully")
+    except Exception as e:
+        print(f"[ERR] Failed to send: {e}")
 
 if __name__ == "__main__":
     main()
