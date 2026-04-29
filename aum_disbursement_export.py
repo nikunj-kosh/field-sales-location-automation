@@ -129,6 +129,291 @@ ADJ = """amount::numeric * CASE
 FY_CASE = f"CASE WHEN db_month >= '{FY_FROM}' THEN {ADJ} ELSE 0 END"
 FY_CNT  = f"CASE WHEN db_month >= '{FY_FROM}' THEN loanshare_id ELSE NULL END"
 
+# ── Employer Sector mapping ────────────────────────────────────────────────────
+EW_TBL = 'public."dss_KOSHSUPERSET_employer_wise_"'
+
+_SECTORS = [
+    ("Auto / Automotive", [
+        # OEMs & major brands
+        "maruti","honda car","honda motorcycle","honda logistics","honda india",
+        "bajaj auto","hero moto","tvs motor","tvs sundram","tvs srichakra",
+        "mahindra","tata motor","tata autocomp","yamaha motor","ford india",
+        "hyundai india","renault india","skoda india","volkswagen india",
+        # Tier-1 / Tier-2 suppliers
+        "varroc","uno minda","minda limited","minda corporation","sandhar",
+        "sansera","rockman","badve","uniparts","lumax auto","denso haryana",
+        "escorts kubota","l.g. balakrishnan","metalman","satyam auto","pp auto",
+        "ampp auto","victoria auto","victora auto","afflatus","spark minda",
+        "vega auto","shivam auto","fcc clutch","fcc india","fcc limited",
+        "jk tyre","imperial auto","neel auto","happy forgings","qh talbros",
+        "alf engineering","motherson sumi","motherson","wheels india",
+        "lan engineering","endurance technologies","endurance sector",
+        "endurance limited","endurance pvt","endurance india","endurance ",
+        "polar auto","sunbeam auto","makino auto","napino","narvada","belrise",
+        "bajajsons","singla forging","hindustan tyre","a. k. automatics",
+        "vgr engineering","fcc auto","elite engineering","universal autofoundry",
+        "ksec pvt","micro turners","k.s.e.c","ask automotive","ask auto",
+        "sarita honda","mmt micro","krishna maruti","fcc",
+        # Generic auto patterns
+        "auto pvt ltd","automotive pvt","motors pvt ltd","motor pvt ltd",
+        "auto components pvt","auto industries pvt","auto tech pvt",
+        "auto engineering pvt","auto parts pvt","vehicle pvt",
+    ]),
+    ("Pharma / Healthcare", [
+        # Known companies
+        "akums drugs","akums pharmaceut","akums pharma","multani pharma",
+        "multani pharmaceut","synokem","romsons","malik lifescience","axa parenteral",
+        "indian herbals","om sai pharma","ankura hospital","tmu hospital",
+        "nanz pharma","cipla","sun pharma","dr reddy","lupin","mankind pharma",
+        "glenmark","torrent pharma","ipca","alkem","zydus","sun pharmaceutical",
+        "abbott india","pfizer india","sanofi india","novartis india",
+        "apollo hospital","fortis hospital","max hospital","medanta",
+        "medplus","healthkart","med pvt","pharma pvt",
+        # Generic patterns
+        "hospital","pharma","pharmaceutical","healthcare","medikit","medic",
+        "clinic","nursing home","dispensary","life science","diagnostic",
+        "pathology","medical college","nursing pvt","health pvt",
+    ]),
+    ("Textiles / Apparel", [
+        # Known companies
+        "richa global","richaco","relaxo footwear","relaxo foot","relaxo limited",
+        "lakhani footwear","lakhani foot","lamba footwear","liberty shoes",
+        "liberty shoe","sangam india","sangam spinner","sangam group","modelama",
+        "sarita handa","devgiri","spring overseas","bindu fashion","basant overseas",
+        "pinnacle clothing","anubhav apparel","raj overseas","tangerine skies",
+        "vision export","ir export","aman export","kaleen","rajlakshmi cotton",
+        "golden texo","designco export","rswm","knitwell","c.l. gupta overseas",
+        "cl gupta overseas","c l gupta overseas","c.l gupta overseas",
+        "rajasthan textile","rajasthan textile mills","birla textile","sutlej textile",
+        "bhadohi weavetax","campus activewear","gupta h.c.","mochiko shoe","mochiko",
+        "cta apparel","the shivalika","ratan textile","nahar","pearl precision",
+        "fa home and app","paramount products","virola international","abros sports",
+        "c.l gupta export","cl gupta export","c l gupta export","ginni international",
+        "lakhani","sarita handa export","krishna textile","indian sport pvt",
+        "trela footwear","ratan textiles","bco impex",
+        # Generic patterns
+        "textile pvt","textil","apparel pvt","apparel","garment pvt","garment",
+        "weaving pvt","weaving","knitwear","hosiery pvt","hosiery",
+        "dyeing pvt","footwear pvt","carpet pvt","spinning pvt",
+        "fabric pvt","woven pvt","yarn pvt","embroidery pvt",
+    ]),
+    ("Consumer Goods / FMCG", [
+        # Known companies
+        "patanjali","nestle india","hindustan unilever","hul pvt","emami",
+        "kent ro","britannia","parle agro","parle pvt","milton company","milton pvt",
+        "b.l agro","hamilton housewares","century pulp","mahesh edible",
+        "lifelong india","voltas","dabur","reckitt","rackitt","vdsd foods",
+        "dolphin sector 2","itc limited","perfetti van melle","titan company",
+        "marico","godrej consumer","procter & gamble","p&g","colgate","gillette",
+        "havmore","amul","mother dairy","kwality","lotus beauty","lotus herbal",
+        "hindustan lever","lever pvt","bajaj consumer","bajaj almond",
+        "himalaya drug","himalaya pvt","nirma pvt","ghadi detergent",
+        "ghadi pvt","vi john","vi-john","joy pvt","parachute pvt",
+        "vicco pvt","boroline pvt","fair & lovely",
+        # Generic
+        "fmcg","consumer goods","household goods","personal care pvt",
+    ]),
+    ("Rubber / Industrial", [
+        "designco pvt","a.g. industries pvt","pyoginam private","bkt tyre",
+        "balkrishna industries","century plyboard","classic industries pvt",
+        "geeken seating","kanchan india","dvs industries","shree amba industries",
+        "pritam international pvt","laopla","m r enterprises","mantri mettalic",
+        "mppl pvt","jain cord","omega printopack","luxor writing","cello housware",
+        "pg electroplast","karam udhyog","govind rubber","fcc pvt",
+        "itc company","rubber pvt","tyre pvt","plyboard pvt","foam pvt",
+        "polyurethane","gasket pvt","seal pvt","plastic pvt","polymer pvt",
+    ]),
+    ("Electronics / Technology", [
+        # Known companies
+        "studds accessories","fiem industries","anchor by panasonic","anchor panasonic",
+        "vvdn technolog","epak durable","delta power solution","surya roshni",
+        "luminous power","c&s electric","c & s electric","polycab","time technoplast",
+        "myra techno","bmr pvt","apj investment pvt","tej shoe tech","okaya",
+        "laxmi remote","jns instrument","global medikit","lifelong meditech",
+        "wonder electr","r k lighting","wipro","c&s electricals","c & s electricals",
+        "samsung india","samsung pvt","samsung electronics","siemens india","abb india",
+        "schneider electric","legrand","tata elxsi","infosys","hcl tech",
+        "tech mahindra","accenture","capgemini","cognizant","mphasis","zensar",
+        "l&t technology","honeywell","philips india","orient electric","bajaj electric",
+        "crompton greaves","finolex cable","vaibhav global","akal information",
+        "noetech","vguard","v guard","v-guard","samriddhi automation",
+        "samriddhi automations","bosch india",
+        # Generic
+        "electronic pvt","electron pvt","technolog pvt","software pvt",
+        "it pvt","digital pvt","it service","automation pvt",
+    ]),
+    ("Manufacturing / Industrial", [
+        "havells india","havells company","havells limited","amber enterprises",
+        "amber pvt","amber ltd","dixon technolog","meenakshi polymer",
+        "asahi india glass","goldplus glass","globe hi tech","man machine solutions",
+        "man machines solutions","man machines solution","manmachine management",
+        "aurangabad electrical","v guard industry","neel metal products ltd haridwar",
+        "neel metal ltd haridwar","flexituff","blue heavens","frontier alloy",
+        "johnson controls","greaves cotton","thermax","bharat forge","isgec",
+        "kunstocom","hnv casting","wonder electricals limited",
+        "wonder electrical limited","r k lighting pvt","c&s electricals limited",
+        "panchkula steel","super alloy casting","padmavati pipes",
+        "universal autofoundry","rp associate","rp associates",
+        # Generic industrial patterns
+        "industries pvt ltd","casting pvt","forging pvt","engineering pvt ltd",
+        "fab pvt","alloy pvt","foundry pvt","fabrication pvt",
+        "tooling pvt","moulding pvt","precision pvt",
+    ]),
+    ("Manufacturing / Metal Products", [
+        "hnv casting india","panchkula steel pvt","super alloy castings",
+        "padmavati pipes & fitting","steel pvt ltd","metal products pvt",
+        "alloys pvt ltd","stainless steel pvt","iron pvt","copper pvt",
+        "aluminium pvt","metal casting pvt","sheet metal pvt",
+        "wire pvt","pipe pvt","fitting pvt","steel india pvt","casting india pvt",
+    ]),
+    ("Manufacturing / Electrical", [
+        "aurora electric","surya electrical","rk electrical",
+        "electrical pvt ltd","switchgear pvt","transformer pvt",
+        "pump pvt","generator pvt","cable pvt",
+    ]),
+    ("Manufacturing / Rubber & Tyres", [
+        "govind rubber ltd","govind rubber","apollo tyre","ceat tyre","mrf tyre",
+        "birla tyre","balkrishna tyre","continental pvt","michelin india",
+        "rubber pvt ltd","tyre pvt ltd",
+    ]),
+    ("Food Processing", [
+        "roquette india","krown agro","greendot health foods","avitech nutrition",
+        "advance panels","itc agri","dabur agri","britannia industries",
+        "parle products","nestle food","agro pvt","food processing pvt",
+        "agro food pvt","food pvt ltd","bakery pvt","flour mill","sugar mill",
+        "rice mill","dal mill","spice pvt","confection pvt","snack pvt",
+        "beverage pvt","jam pvt","pickle pvt","dairy pvt",
+    ]),
+    ("Real Estate / Construction", [
+        "unimax international","balaji action buildwell","avadh rail infra",
+        "genus power infra","kirby building","ultratech cement","dlf limited",
+        "l&t construction","larsen & toubro","tata projects","shapoorji",
+        "sobha","prestige estate","brigade group","godrej properties",
+        "mmt distributors pvt","mmt distributors",
+        "cement pvt","construction pvt","buildwell","infra pvt","real estate",
+        "housing pvt","builder pvt","realty pvt","township pvt",
+    ]),
+    ("Logistics / Transport", [
+        "zinka logistics","loadshare networks","dhl india","bluedart","fedex india",
+        "ekart logistics","xpressbees","shadowfax","ecom express","delhivery",
+        "safexpress","ezidrive","tour and travel","travels pvt","roadways pvt",
+        "road transport pvt","cab service pvt","taxi pvt","fleet pvt",
+        "transport pvt","logistics pvt","cargo pvt","trucking pvt",
+        "courier pvt","supply chain pvt","shipping pvt","freight pvt",
+        "warehousing pvt","sis limited",
+    ]),
+    ("Services / Security", [
+        "sis security","proactive security","gdx security","checkmate security",
+        "goldeneye guarding","ashoka unique services","securitas","g4s pvt",
+        "security services pvt","security solutions pvt","security guard pvt",
+        "guarding pvt","surveillance pvt","detective pvt","patrol pvt",
+    ]),
+    ("Services / Staffing", [
+        "sk services","altum staffing","manpower pvt","quess corp",
+        "kapston facilities","arcos skill","teamlease","mafoi","adecco","randstad",
+        "staffing pvt","placement pvt","staffing services","workforce pvt",
+        "human resource pvt","hr service pvt","recruitment pvt",
+        "flexi staffing","manpower services","outsourcing pvt",
+    ]),
+    ("Services / Facilities Management", [
+        "nimbus harbor","yes madam","urbanclap","urban company",
+        "housekeeping pvt","catering service pvt","facility management pvt",
+        "facilities management pvt","integrated facility",
+        "maintenance service pvt","pest control pvt","cleaning service pvt",
+    ]),
+    ("Hospitality", [
+        "hotel","resort","motel","lodge pvt","inn pvt","restaurant pvt",
+        "dessertino","dhaba pvt","banquet pvt","cafe pvt","canteen pvt",
+        "hospitality pvt","food court pvt","club pvt","spa pvt",
+    ]),
+    ("Government / PSU", [
+        "sjvn limited","sjvn","cpwd","ntpc limited","ntpc ltd","ongc",
+        "hpcl","bpcl","iocl","coal india","power grid","nhpc","bhel",
+        "bsnl","air india","indian railways","nagarpalika","municipal corporation",
+        "panchayat","government","govt ","public sector","police department",
+        "army","navy","air force","central govt","state govt",
+        "pwd ","nhai","gail india","sail ","hpcl mittal","postal dept","lic india",
+    ]),
+    ("BFSI / Finance", [
+        "finnew corporate","paytm","hdfc bank","icici bank","sbi ","axis bank",
+        "kotak bank","yes bank","idfc bank","bandhan bank","bajaj finserv",
+        "bajaj finance","mahindra finance","shriram finance","muthoot",
+        "manappuram","fullerton","capital first","piramal finance","aequitas",
+        "loantap","cashe","nira finance","kreditbee","moneyview","navi pvt",
+        "aditya birla capital","tata capital","insurance pvt","nbfc pvt",
+        "microfinance pvt","credit pvt","lending pvt","financial service pvt",
+        "wealth management pvt","securities pvt","broker pvt",
+    ]),
+    ("Chemicals / Specialty", [
+        "srf ltd","macnorr mcnore","india pesticides","atul chemicals",
+        "kansai nerolac","kansai nerlac","asian paints","berger paints",
+        "nippon paint","akzo nobel","jk cement","acc cement","ambuja cement",
+        "aarti industries","vinati organics","specialty chemical",
+        "chemical pvt ltd","chemicals pvt ltd","petrochemical pvt",
+        "lubricant pvt","adhesive pvt","coating pvt","paint pvt","ink pvt","resin pvt",
+    ]),
+    ("Fertilizers / Chemicals", [
+        "chambal fertilizers","chambal fertiliser","coromandel international",
+        "deepak fertiliser","national fertilizer","iffco","kribhco",
+        "fertilizer pvt","fertiliser pvt","agrochem pvt",
+    ]),
+    ("Glass / Materials", [
+        "greenlam industries","greenpanel industries","aica laminates",
+        "neelmatel","asahi india glass","saint gobain","pilkington",
+        "hindalco","vedanta","laminate pvt","glass pvt","marble pvt",
+        "granite pvt","tile pvt","ceramic pvt","flooring pvt",
+    ]),
+    ("Printing / Packaging", [
+        "parksons packaging","thomson press india","flexituff ventures",
+        "manjushree technopack","printing pvt","packaging pvt","carton pvt",
+        "paper pvt","corrugated pvt","label pvt","polybag pvt","sachet pvt",
+    ]),
+    ("Exports / Trading", [
+        "abc impex","ac brothers","a.c. brothers","gaurav international",
+        "san international","sahu global","evergreen international",
+        "a.c brothers","raj overseas corporate","import export pvt",
+        "international trading","export pvt ltd","import pvt",
+        "trading pvt ltd","trading co pvt","mercantile pvt","merchandise pvt",
+    ]),
+    ("Telecom / Media", [
+        "airtel","jio pvt","vodafone","tata teleservices","mtnl",
+        "dish tv","tata sky","sun direct","zee media","tv18","network18",
+        "telecom pvt","media pvt","broadcasting pvt","content pvt",
+    ]),
+    ("Toys / Misc Manufacturing", [
+        "neel mattel","mattel india","funskool","hasbro india","toy pvt",
+        "games pvt","sporting goods pvt","sports equip pvt","indian sport pvt",
+        "abros sports",
+    ]),
+    ("Education", [
+        "tmu university","tmu college","harrow senior secondary",
+        "prerna engineering education","school","college","university",
+        "vidyalaya","academy pvt","coaching pvt","education pvt",
+        "institute pvt","tutorial pvt","learning pvt",
+    ]),
+    ("Self-employed / Tailoring", [
+        "tailor","silai mashin","silai machine","sewing work","stitching work",
+        "darzi","privet job tailor","tailoring work","silai kaam","kapda silai",
+    ]),
+    ("Self-employed / Dairy", [
+        "milk dairy","milk deiry","dairy farm","milk and dairy","dudh ka kam",
+        "private job milk","dairy product","milk supply","milkman","doodh",
+    ]),
+]
+
+def _build_sector_case():
+    lines = ["CASE"]
+    for sector, keywords in _SECTORS:
+        conds = " OR ".join(f"ew.employer ILIKE '%{kw}%'" for kw in keywords)
+        lines.append(f"    WHEN ew.employer IS NOT NULL AND ({conds})")
+        lines.append(f"        THEN '{sector}'")
+    lines.append("    WHEN ew.employer IS NULL OR TRIM(ew.employer) = '' THEN 'Unknown'")
+    lines.append("    ELSE 'Other / Unclassified'")
+    lines.append("END")
+    return "\n".join(lines)
+
+SECTOR_CASE = _build_sector_case()
+
 # ── Sanity check ──────────────────────────────────────────────────────────────
 print("\n[Sanity Check — available snapshots]")
 run(f"""
@@ -212,12 +497,20 @@ GROUP BY 1, 2
 ORDER BY snapshot_date, dimension
 """, "4. By Income Level")
 
-print("\n[5] By Employment Type")
-df5 = cut("""CASE employment_type
-        WHEN 'salaried'      THEN 'Salaried'
-        WHEN 'self_employed' THEN 'Self Employed'
-        ELSE COALESCE(employment_type, 'Unknown')
-    END""", "5. By Employment Type")
+print("\n[5] By Employer Sector")
+df5 = run_batched(f"""
+SELECT
+    c.date_created::date                  AS snapshot_date,
+    {SECTOR_CASE}                         AS dimension,
+    SUM(c.principal_outstanding)::bigint  AS "AUM",
+    SUM({FY_CASE})::bigint                AS disbursal
+FROM {TBL} c
+LEFT JOIN {EW_TBL} ew ON ew.loanshare_id = c.loanshare_id
+WHERE {AUM_WHERE}
+  {{year_filter}}
+GROUP BY 1, 2
+ORDER BY snapshot_date, "AUM" DESC
+""", "5. By Employer Sector")
 
 print("\n[6] By Lender Count")
 df6 = run_batched(f"""
@@ -270,7 +563,7 @@ datasets = {
     "2. By Ticket Size":     df2,
     "3. By Sourcing Mix":    df3,
     "4. By Income Level":    df4,
-    "5. By Employment Type": df5,
+    "5. By Employer Sector":  df5,
     "6. By Lender Count":    df6,
     "7. By Book Type":       df7,
     "8. New vs Repeat":      df8,
