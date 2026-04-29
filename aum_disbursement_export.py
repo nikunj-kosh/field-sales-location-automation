@@ -571,7 +571,6 @@ datasets = {
 
 # ── Styles ────────────────────────────────────────────────────────────────────
 from openpyxl import Workbook
-from openpyxl.chart import LineChart, Reference
 
 TITLE_FILL = PatternFill("solid", fgColor="17324D")
 TITLE_FONT = Font(color="FFFFFF", bold=True, size=11)
@@ -581,6 +580,8 @@ DIM_FILL   = PatternFill("solid", fgColor="D6E4F0")
 DIM_FONT   = Font(bold=True, size=9, color="17324D")
 EVEN_FILL  = PatternFill("solid", fgColor="FFFFFF")
 ODD_FILL   = PatternFill("solid", fgColor="EBF3FB")
+TOTAL_FILL = PatternFill("solid", fgColor="17324D")
+TOTAL_FONT = Font(color="FFFFFF", bold=True, size=9)
 BORDER     = Border(
     left=Side(style="thin", color="BDC3C7"),
     right=Side(style="thin", color="BDC3C7"),
@@ -601,6 +602,7 @@ def write_pivot_block(ws, pivot, start_row, label, fmt=MONEY_FMT):
     hdr_row        = start_row + 1
     first_data_row = start_row + 2
     last_data_row  = start_row + 1 + n_dims
+    total_row      = last_data_row + 1
 
     ws.merge_cells(start_row=start_row, start_column=1,
                    end_row=start_row,   end_column=n_cols + 1)
@@ -636,31 +638,23 @@ def write_pivot_block(ws, pivot, start_row, label, fmt=MONEY_FMT):
                          align=Alignment(horizontal="right", vertical="center"),
                          fmt=fmt)
 
+    # Total row
+    ws.row_dimensions[total_row].height = 16
+    tc = ws.cell(row=total_row, column=1, value="Total")
+    _border_cell(tc, TOTAL_FILL, font=TOTAL_FONT,
+                 align=Alignment(horizontal="left", vertical="center", indent=1))
+    col_totals = pivot.fillna(0).sum(axis=0)
+    for c_off, val in enumerate(col_totals, start=2):
+        dc = ws.cell(row=total_row, column=c_off, value=int(val))
+        _border_cell(dc, TOTAL_FILL, font=TOTAL_FONT,
+                     align=Alignment(horizontal="right", vertical="center"),
+                     fmt=fmt)
+
     ws.column_dimensions["A"].width = 24
     for i in range(2, n_cols + 2):
         ws.column_dimensions[get_column_letter(i)].width = 8
 
-    return last_data_row, hdr_row, first_data_row, n_cols
-
-
-def make_line_chart(ws, first_data_row, last_data_row, hdr_row, n_cols, title):
-    chart               = LineChart()
-    chart.title         = title
-    chart.style         = 10
-    chart.width         = 30
-    chart.height        = 15
-    chart.y_axis.numFmt = "#,##0"
-    chart.y_axis.title  = "INR"
-    chart.x_axis.title  = "Date"
-
-    data = Reference(ws, min_col=1, max_col=n_cols + 1,
-                     min_row=first_data_row, max_row=last_data_row)
-    chart.add_data(data, from_rows=True, titles_from_data=True)
-
-    cats = Reference(ws, min_col=2, max_col=n_cols + 1,
-                     min_row=hdr_row, max_row=hdr_row)
-    chart.set_categories(cats)
-    return chart
+    return total_row, hdr_row, first_data_row, n_cols
 
 
 # ── Build workbook ────────────────────────────────────────────────────────────
@@ -689,9 +683,6 @@ for name, df in datasets.items():
 
         last, hdr, fdr, nc = write_pivot_block(ws, piv, start_row=1,
                                                 label="Active Borrowers", fmt="#,##0")
-        chart = make_line_chart(ws, fdr, last, hdr, nc, "Active Borrowers Over Time")
-        chart.y_axis.title = "Count"
-        ws.add_chart(chart, f"{get_column_letter(nc + 3)}1")
         ws.freeze_panes = "B3"
 
     else:
@@ -709,23 +700,14 @@ for name, df in datasets.items():
         aum_piv  = aum_piv.reindex(row_order)
         disb_piv = disb_piv.reindex(row_order)
 
-        nc        = len(date_labels)
-        chart_col = get_column_letter(nc + 3)
-
         aum_last, aum_hdr, aum_fdr, _ = write_pivot_block(
             ws, aum_piv, start_row=1,
             label="AUM — Principal Outstanding (INR)")
-        ws.add_chart(
-            make_line_chart(ws, aum_fdr, aum_last, aum_hdr, nc, "AUM — Principal Outstanding"),
-            f"{chart_col}1")
 
         disb_start = aum_last + 3
         disb_last, disb_hdr, disb_fdr, _ = write_pivot_block(
             ws, disb_piv, start_row=disb_start,
             label="Total Disbursal (INR)")
-        ws.add_chart(
-            make_line_chart(ws, disb_fdr, disb_last, disb_hdr, nc, "Total Disbursal"),
-            f"{chart_col}{disb_start}")
 
         ws.freeze_panes = "B3"
 
