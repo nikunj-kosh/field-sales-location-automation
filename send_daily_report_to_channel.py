@@ -8,8 +8,8 @@ from superset_sqllab import SupersetClient
 
 # --- CONFIGURATION ---
 SUPERSET_URL = 'https://superset.bkosh.com'
-SUPERSET_USERNAME = 'aditya_'
-SUPERSET_PASSWORD = 'Kosh@123'
+SUPERSET_USERNAME = os.environ["SUPERSET_UN"]
+SUPERSET_PASSWORD = os.environ["SUPERSET_PASS"]
 DATABASE_ID = 21  # Kosh Analytics
 
 # API settings for sending messages to the chat channel
