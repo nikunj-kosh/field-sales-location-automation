@@ -219,14 +219,8 @@ def main():
     filename = f"daily_aggregator_report_{target_str}.xlsx"
     file_paths = []
     try:
-        df_report1 = df_all[(df_all['source'] == 'account_aggregator') | (df_all['crif_score'] > 299)]
-        df_report2 = df_all[
-            ((df_all['source'].notnull()) & (df_all['source'] != 'account_aggregator')) |
-            (df_all['crif_score'].between(-100, 299))
-        ]
         with pd.ExcelWriter(filename, engine='openpyxl') as writer:
-            df_report1.to_excel(writer, sheet_name='acc_agg_or_not_ntc', index=False)
-            df_report2.to_excel(writer, sheet_name='acc_no_agg_or_ntc', index=False)
+            df_all.to_excel(writer, sheet_name='daily_report', index=False)
         file_paths.append(filename)
 
         overall_pct = calculate_pct(df_all)
