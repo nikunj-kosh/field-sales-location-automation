@@ -32,11 +32,14 @@ import requests
 from datetime import date, datetime
 
 # ── Config ────────────────────────────────────────────────────────────────────
-BASE_URL  = "https://superset.bkosh.com"
-USERNAME  = "ayushd"
-PASSWORD  = "Getkosh101"
-KOSH_DB   = 1
-DESKTOP   = os.path.join(os.path.expanduser("~"), "Desktop")
+BASE_URL  = os.environ.get("SUPERSET_BASE_URL", "https://superset.bkosh.com")
+USERNAME  = os.environ.get("SUPERSET_UN", "ayushd")
+PASSWORD  = os.environ.get("SUPERSET_PASS", "Getkosh101")
+KOSH_DB   = int(os.environ.get("SUPERSET_KOSH_DB", "1"))
+OUTPUT_DIR = os.environ.get(
+    "NACH_OUTPUT_DIR",
+    os.path.join(os.path.expanduser("~"), "Desktop"),
+)
 PAGE_SIZE = 9_000   # stay under Superset's 10k-row cap per request
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -475,8 +478,9 @@ def main():
     summaries = build_summary(rows)
     print_report(summaries, month_label)
 
-    xlsx_path  = os.path.join(DESKTOP, f"setu_nach_sheet_{slug}.xlsx")
-    chart_path = os.path.join(DESKTOP, f"setu_nach_chart_{slug}.png")
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    xlsx_path  = os.path.join(OUTPUT_DIR, f"setu_nach_sheet_{slug}.xlsx")
+    chart_path = os.path.join(OUTPUT_DIR, f"setu_nach_chart_{slug}.png")
 
     print("Writing Excel ...")
     save_excel(rows, summaries, month_label, xlsx_path)

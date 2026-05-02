@@ -1,0 +1,48 @@
+name: Setu NACH Status
+
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "Month to run, YYYY-MM. Leave blank for current month."
+        required: false
+        type: string
+  schedule:
+    - cron: "30 3 * * *" # 9:00 AM IST
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate Setu NACH status
+        env:
+          SUPERSET_UN: ${{ secrets.SUPERSET_UN }}
+          SUPERSET_PASS: ${{ secrets.SUPERSET_PASS }}
+          SUPERSET_KOSH_DB: "1"
+          NACH_OUTPUT_DIR: ${{ github.workspace }}/nach-output
+          MONTH: ${{ inputs.month }}
+        run: |
+          if [ -n "$MONTH" ]; then
+            python nach/nach_setu_sheet.py "$MONTH"
+          else
+            python nach/nach_setu_sheet.py
+          fi
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: setu-nach-status
+          path: nach-output/*
+          if-no-files-found: error

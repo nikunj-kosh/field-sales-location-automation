@@ -2,3 +2,4 @@ pandas
 requests
 openpyxl
 urllib3
+matplotlib
