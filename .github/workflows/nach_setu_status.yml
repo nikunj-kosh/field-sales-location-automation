@@ -1,6 +1,13 @@
 name: Setu NACH Status
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/nach_setu_status.yml"
+      - "nach/nach_setu_sheet.py"
+      - "requirements.txt"
   workflow_dispatch:
     inputs:
       month:
