@@ -27,7 +27,7 @@ def get_whatsapp_query(target_date):
     SELECT count(DISTINCT wa_message_id) AS total_messages
     FROM (
         SELECT b.wa_message_id, (b.created_at AT TIME ZONE 'Asia/Calcutta')::date as message_created_at
-        FROM "dss_KOSHSUPERSET_whatsapp_loan_approved_" b
+        FROM "KOSHSUPERSET_whatsapp_loan_approved_" b
         JOIN "dss_KOSHSUPERSET_loan_wise_user_list_" a ON a.tenant_user_id = b.receiver_user_id
         WHERE b.message_type = 'template' AND b.status IN ('sent', 'read', 'delivered')
     ) AS virtual_table
