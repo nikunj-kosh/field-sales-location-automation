@@ -1,12 +1,12 @@
-name: Field Sales Location Automation
+name: Test Workflow
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-job:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test
-        run: echo "Workflow is working"
+      - name: Test Step
+        run: echo "Hello"
