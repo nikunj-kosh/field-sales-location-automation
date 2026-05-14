@@ -2,23 +2,16 @@ name: Field Sales Location Automation
 
 on:
   schedule:
-
-    # Every 30 mins from 9 AM IST to 6 PM IST
     - cron: '*/30 3-12 * * *'
-
-    # Daily at 6 PM IST
     - cron: '30 12 * * *'
 
   workflow_dispatch:
 
 jobs:
-
   location-report:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v4
 
