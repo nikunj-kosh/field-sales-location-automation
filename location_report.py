@@ -9,11 +9,12 @@ from datetime import datetime, timedelta, timezone
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SUPERSET_URL      = 'https://superset.bkosh.com'
-SUPERSET_USERNAME = os.environ["SUPERSET_UN"]
-SUPERSET_PASSWORD = os.environ["SUPERSET_PASS"]
+SUPERSET_USERNAME =  'nikunj'
+SUPERSET_PASSWORD = 'Kosh@123'
 DATABASE_ID       = 21
 API_URL           = 'https://kosh.cluster.gksh.in/chat/v1/channel-message/create-system-msg/'
-AUTH_TOKEN        = f'Bearer {os.environ["CHANNEL_AUTH_TOKEN"]}'
+AUTH_TOKEN        =  'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgwNjM4NTgyLCJpYXQiOjE3NzgwNDY1ODIsImp0aSI6IjM2N2M3MDdhYjRhMjRkM2FiYzFjNjg1ODg0Nzc2ZDM3IiwidXNlcl9pZCI6ImYyVlJzTE1jTXA5bzRlRGdwV0xWRzciLCJwZXJtaXNzaW9ucyI6W10sImdyb3VwcyI6WyJtZW1iZXIiXX0.Wq0kJZP22Xy1DNsGZOSG3VYrtysm8aVRU16pAvF4I2x5zpr7v-6BMmQGdBHAsxNAf0j0Kx_1vw8NWD6bUlK8DgYMri9gQ0vPTlYs5DWdVsk8qI8cqfWfz7Ttf9zZQkDZg_gJjXWN3umIYQgv5Z-4x6JxmmiaLZMxP7wY_SyszECG6YKosOZOavFEYLd8kJDGxarEpy1N0PSiapq48emCVTXaga2Ef7LI-f0kCUZiTlH9Actn0wpNAe9RIbFLNPbSDJpNrNbTDJhtGmTRDq1tTX75awzFmHXmlzbb61UuLp7ZGfUrrTTqMJQBGzRAyVLLyffXtn26XuVOiJxDQKhd1w'
+
 CHANNEL_ID        = 't7NHtmu7EPIUZqZ8jabuP1JbooV6jXFpJ4nZ7x6ykDE~'
 
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -126,13 +127,14 @@ def main():
         return
 
     msg = f"Field Sales Live Location Report — {report_time}\n\n" + "\n\n".join(sections)
-
+    print("Generated report:\n" + msg)
     print(f"Sending combined report to channel...")
-    try:
+    try:                                       
         send_message(msg)
         print("[OK] Report sent successfully")
-    except Exception as e:
+    except Exception as e:   
         print(f"[ERR] Failed to send: {e}")
 
 if __name__ == "__main__":
     main()
+
