@@ -1,16 +1,21 @@
 name: Field Sales Location Automation
 
 on:
-  workflow_dispatch:
   schedule:
+    # Every 30 min from 9 AM to 6 PM IST
     - cron: '*/30 3-12 * * *'
 
+    # 6 PM IST summary run
+    - cron: '30 12 * * *'
+
+  workflow_dispatch:
+
 jobs:
-  send-location-report:
+  run-location-report:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Repo
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -18,13 +23,14 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Requirements
-        run: pip install -r requirements.txt
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
 
-      - name: Run Python Script
+      - name: Run Automation
         env:
           SUPERSET_UN: ${{ secrets.SUPERSET_UN }}
           SUPERSET_PASS: ${{ secrets.SUPERSET_PASS }}
           CHANNEL_AUTH_TOKEN: ${{ secrets.CHANNEL_AUTH_TOKEN }}
-
-        run: python location_report_summary.py
+        run: |
+          python location_report_summary.py
