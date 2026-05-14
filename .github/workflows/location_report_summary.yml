@@ -30,3 +30,5 @@ jobs:
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
 
         run: python location_report_summary.py
+
+        
