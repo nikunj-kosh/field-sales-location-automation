@@ -1,0 +1,33 @@
+name: Field Sales Live Location Report
+
+on:
+  schedule:
+    - cron: '*/30 3-12 * * *'
+    - cron: '30 12 * * *'
+
+  workflow_dispatch:
+
+jobs:
+  send-location-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run automation
+        env:
+          SUPERSET_UN: ${{ secrets.SUPERSET_UN }}
+          SUPERSET_PASS: ${{ secrets.SUPERSET_PASS }}
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+
+        run: python location_report_summary.py
